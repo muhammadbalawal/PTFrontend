@@ -299,8 +299,8 @@
             <input
                 id="apiBase"
                 type="text"
-                placeholder="http://localhost:8000"
-                value="http://localhost:8000"
+                placeholder="http://146.190.245.74:8000"
+                value="http://146.190.245.74:8000"
             />
         </div>
 
@@ -348,10 +348,9 @@
             let deviceListRefreshInterval = null;
 
             function getApiBase() {
-                return (apiBaseInput.value || "http://localhost:8000").replace(
-                    /\/$/,
-                    "",
-                );
+                return (
+                    apiBaseInput.value || "http://146.190.245.74:8000"
+                ).replace(/\/$/, "");
             }
 
             function getToken() {
