@@ -1,0 +1,912 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>PT Agent – Frontend</title>
+        <style>
+            * {
+                box-sizing: border-box;
+            }
+            body {
+                font-family:
+                    system-ui,
+                    -apple-system,
+                    sans-serif;
+                max-width: 560px;
+                margin: 0 auto;
+                padding: 24px;
+                background: #1a1a1a;
+                color: #e5e5e5;
+                min-height: 100vh;
+            }
+            h1 {
+                font-size: 1.5rem;
+                margin-bottom: 0.5rem;
+            }
+            .muted {
+                color: #888;
+                font-size: 0.9rem;
+                margin-bottom: 24px;
+            }
+            .card {
+                background: #262626;
+                border: 1px solid #333;
+                border-radius: 12px;
+                padding: 20px;
+                margin-bottom: 16px;
+            }
+            .card h2 {
+                font-size: 1.1rem;
+                margin: 0 0 12px 0;
+            }
+            label {
+                display: block;
+                margin-bottom: 6px;
+                font-size: 0.9rem;
+                color: #aaa;
+            }
+            input {
+                width: 100%;
+                padding: 10px 12px;
+                border: 1px solid #444;
+                border-radius: 8px;
+                background: #1a1a1a;
+                color: #fff;
+                font-size: 1rem;
+                margin-bottom: 12px;
+            }
+            input::placeholder {
+                color: #666;
+            }
+            button {
+                padding: 10px 20px;
+                border: none;
+                border-radius: 8px;
+                font-size: 1rem;
+                cursor: pointer;
+                margin-right: 8px;
+                margin-top: 4px;
+            }
+            button:disabled {
+                opacity: 0.6;
+                cursor: not-allowed;
+            }
+            .btn-primary {
+                background: #2563eb;
+                color: white;
+            }
+            .btn-primary:hover:not(:disabled) {
+                background: #1d4ed8;
+            }
+            .btn-secondary {
+                background: #404040;
+                color: #e5e5e5;
+            }
+            .btn-secondary:hover:not(:disabled) {
+                background: #525252;
+            }
+            .btn-danger {
+                background: #7f1d1d;
+                color: #fecaca;
+            }
+            .btn-danger:hover:not(:disabled) {
+                background: #991b1b;
+            }
+            .message {
+                margin-top: 12px;
+                padding: 10px;
+                border-radius: 8px;
+                font-size: 0.9rem;
+            }
+            .message.success {
+                background: #14532d;
+                color: #bbf7d0;
+            }
+            .message.error {
+                background: #450a0a;
+                color: #fecaca;
+            }
+            .message.info {
+                background: #1e3a5f;
+                color: #bfdbfe;
+            }
+            .row {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                flex-wrap: wrap;
+                gap: 12px;
+            }
+            .tabs {
+                display: flex;
+                gap: 0;
+                margin-bottom: 16px;
+            }
+            .tabs button {
+                margin: 0;
+                border-radius: 8px 8px 0 0;
+                padding: 8px 16px;
+            }
+            .tabs button.active {
+                background: #404040;
+            }
+            .hide {
+                display: none !important;
+            }
+            .device-row {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 10px 0;
+                border-bottom: 1px solid #333;
+            }
+            .device-row:last-child {
+                border-bottom: none;
+            }
+            .device-row .btn-danger {
+                padding: 6px 12px;
+                font-size: 0.9rem;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>PT Agent</h1>
+        <p class="muted">Frontend for the Cisco PT Agent backend.</p>
+
+        <div id="status" class="card">
+            <h2>Backend status</h2>
+            <p id="statusText">Checking…</p>
+        </div>
+
+        <div id="checkoutResult" class="card hide" style="margin-bottom: 16px">
+            <p id="checkoutResultText"></p>
+        </div>
+
+        <!-- Login / Register -->
+        <div id="authCard" class="card">
+            <h2 id="authTitle">Log in</h2>
+            <div class="tabs">
+                <button
+                    type="button"
+                    id="tabLogin"
+                    class="btn-secondary active"
+                >
+                    Log in
+                </button>
+                <button type="button" id="tabRegister" class="btn-secondary">
+                    Register
+                </button>
+            </div>
+            <div id="authForm">
+                <label for="authEmail">Email</label>
+                <input
+                    id="authEmail"
+                    type="email"
+                    placeholder="you@example.com"
+                    autocomplete="email"
+                />
+                <label for="authPassword">Password</label>
+                <input
+                    id="authPassword"
+                    type="password"
+                    placeholder="••••••••"
+                    autocomplete="current-password"
+                />
+                <div>
+                    <button type="button" class="btn-primary" id="loginBtn">
+                        Log in
+                    </button>
+                    <button type="button" class="btn-primary" id="registerBtn">
+                        Create account
+                    </button>
+                </div>
+            </div>
+            <div id="authMessage"></div>
+        </div>
+
+        <!-- Logged in state -->
+        <div id="loggedInCard" class="card hide">
+            <div class="row">
+                <div>
+                    <h2 style="margin: 0">Account</h2>
+                    <p class="muted" style="margin: 4px 0 0 0">
+                        Logged in as <strong id="userEmail">—</strong>
+                    </p>
+                </div>
+                <button type="button" class="btn-danger" id="logoutBtn">
+                    Log out
+                </button>
+            </div>
+        </div>
+
+        <!-- Subscription (when logged in) -->
+        <div id="subscriptionCard" class="card hide">
+            <h2>Subscription</h2>
+            <p id="subscriptionStatus" class="muted">Loading…</p>
+            <p
+                id="subscriptionUsage"
+                class="muted"
+                style="margin-top: 6px; display: none"
+            ></p>
+            <div id="subscriptionActions">
+                <button type="button" class="btn-primary" id="upgradeBtn">
+                    Upgrade
+                </button>
+                <button type="button" class="btn-secondary" id="manageSubBtn">
+                    Manage subscription
+                </button>
+            </div>
+            <div id="subscriptionPlans" class="hide">
+                <p class="muted" style="margin-bottom: 8px">Choose a plan:</p>
+                <div id="plansList"></div>
+            </div>
+            <div id="subscriptionMessage"></div>
+        </div>
+
+        <!-- Remove devices (when logged in) -->
+        <div id="removeDevicesCard" class="card hide">
+            <div class="row" style="align-items: center; margin-bottom: 8px">
+                <h2 style="margin: 0">Devices on my account</h2>
+                <button
+                    type="button"
+                    class="btn-secondary"
+                    id="refreshDevicesBtn"
+                    style="padding: 6px 12px; font-size: 0.9rem"
+                >
+                    Refresh
+                </button>
+            </div>
+            <p class="muted" style="margin-bottom: 12px">
+                Remove a device to revoke its access. It will need to activate
+                again with a new code. If Packet Tracer just connected, click
+                Refresh to see it.
+            </p>
+            <div id="deviceList"></div>
+            <p id="deviceListEmpty" class="muted hide" style="margin-top: 8px">
+                No devices linked.
+            </p>
+            <div id="revokeMessage"></div>
+        </div>
+
+        <!-- Device activation (uses stored token) -->
+        <div class="card">
+            <h2>Activate device with code</h2>
+            <p class="muted" style="margin-bottom: 12px">
+                Enter the code shown in Packet Tracer (e.g. ABCD-1234). You must
+                be logged in.
+            </p>
+            <p id="deviceLoginHint" class="message info hide">
+                Log in above to activate devices.
+            </p>
+            <label for="deviceCode">Device code</label>
+            <input
+                id="deviceCode"
+                type="text"
+                placeholder="ABCD-1234"
+                maxlength="9"
+            />
+            <button type="button" class="btn-primary" id="approveBtn">
+                Activate device
+            </button>
+            <div id="approveMessage"></div>
+        </div>
+
+        <!-- API base URL -->
+        <div class="card">
+            <h2>API base URL</h2>
+            <label for="apiBase">Backend URL</label>
+            <input
+                id="apiBase"
+                type="text"
+                placeholder="http://localhost:8000"
+                value="http://localhost:8000"
+            />
+        </div>
+
+        <script>
+            const STORAGE_KEY_TOKEN = "pt_agent_token";
+            const STORAGE_KEY_EMAIL = "pt_agent_email";
+
+            const apiBaseInput = document.getElementById("apiBase");
+            const statusText = document.getElementById("statusText");
+            const authCard = document.getElementById("authCard");
+            const authTitle = document.getElementById("authTitle");
+            const tabLogin = document.getElementById("tabLogin");
+            const tabRegister = document.getElementById("tabRegister");
+            const authEmail = document.getElementById("authEmail");
+            const authPassword = document.getElementById("authPassword");
+            const loginBtn = document.getElementById("loginBtn");
+            const registerBtn = document.getElementById("registerBtn");
+            const authMessage = document.getElementById("authMessage");
+            const loggedInCard = document.getElementById("loggedInCard");
+            const userEmailEl = document.getElementById("userEmail");
+            const logoutBtn = document.getElementById("logoutBtn");
+            const deviceLoginHint = document.getElementById("deviceLoginHint");
+            const deviceCodeInput = document.getElementById("deviceCode");
+            const approveBtn = document.getElementById("approveBtn");
+            const approveMessage = document.getElementById("approveMessage");
+            const subscriptionStatus =
+                document.getElementById("subscriptionStatus");
+            const subscriptionUsage =
+                document.getElementById("subscriptionUsage");
+            const subscriptionPlans =
+                document.getElementById("subscriptionPlans");
+            const plansList = document.getElementById("plansList");
+            const subscriptionMessage = document.getElementById(
+                "subscriptionMessage",
+            );
+            const upgradeBtn = document.getElementById("upgradeBtn");
+            const manageSubBtn = document.getElementById("manageSubBtn");
+            const deviceList = document.getElementById("deviceList");
+            const deviceListEmpty = document.getElementById("deviceListEmpty");
+            const revokeMessage = document.getElementById("revokeMessage");
+            const refreshDevicesBtn =
+                document.getElementById("refreshDevicesBtn");
+
+            let cachedPlans = [];
+            let deviceListRefreshInterval = null;
+
+            function getApiBase() {
+                return (apiBaseInput.value || "http://localhost:8000").replace(
+                    /\/$/,
+                    "",
+                );
+            }
+
+            function getToken() {
+                return localStorage.getItem(STORAGE_KEY_TOKEN) || "";
+            }
+
+            function setAuth(token, email) {
+                if (token) {
+                    localStorage.setItem(STORAGE_KEY_TOKEN, token);
+                    localStorage.setItem(STORAGE_KEY_EMAIL, email || "");
+                } else {
+                    localStorage.removeItem(STORAGE_KEY_TOKEN);
+                    localStorage.removeItem(STORAGE_KEY_EMAIL);
+                }
+                updateAuthUI();
+            }
+
+            function updateAuthUI() {
+                const token = getToken();
+                const email = localStorage.getItem(STORAGE_KEY_EMAIL) || "";
+                if (token) {
+                    authCard.classList.add("hide");
+                    loggedInCard.classList.remove("hide");
+                    document
+                        .getElementById("subscriptionCard")
+                        .classList.remove("hide");
+                    document
+                        .getElementById("removeDevicesCard")
+                        .classList.remove("hide");
+                    userEmailEl.textContent = email || "Signed in";
+                    deviceLoginHint.classList.add("hide");
+                    loadSubscription();
+                    loadDeviceList();
+                    if (deviceListRefreshInterval)
+                        clearInterval(deviceListRefreshInterval);
+                    deviceListRefreshInterval = setInterval(
+                        loadDeviceList,
+                        20000,
+                    );
+                } else {
+                    authCard.classList.remove("hide");
+                    loggedInCard.classList.add("hide");
+                    document
+                        .getElementById("subscriptionCard")
+                        .classList.add("hide");
+                    document
+                        .getElementById("removeDevicesCard")
+                        .classList.add("hide");
+                    deviceLoginHint.classList.remove("hide");
+                    if (deviceListRefreshInterval) {
+                        clearInterval(deviceListRefreshInterval);
+                        deviceListRefreshInterval = null;
+                    }
+                }
+            }
+
+            function showAuthMessage(text, type) {
+                authMessage.textContent = text;
+                authMessage.className = "message " + (type || "info");
+                authMessage.style.display = text ? "block" : "none";
+            }
+
+            function showApproveMessage(text, type) {
+                approveMessage.textContent = text;
+                approveMessage.className = "message " + (type || "info");
+                approveMessage.style.display = text ? "block" : "none";
+            }
+
+            async function checkStatus() {
+                try {
+                    const res = await fetch(getApiBase() + "/");
+                    const data = await res.json();
+                    statusText.textContent =
+                        "Backend running. Environment: " +
+                        (data.environment || "unknown") +
+                        ", active sessions: " +
+                        (data.active_sessions ?? "?");
+                } catch (e) {
+                    statusText.textContent =
+                        "Cannot reach backend: " + e.message;
+                }
+            }
+
+            async function doLogin() {
+                const email = (authEmail.value || "").trim();
+                const password = authPassword.value || "";
+                if (!email || !password) {
+                    showAuthMessage("Enter email and password.", "error");
+                    return;
+                }
+                showAuthMessage("Logging in…", "info");
+                loginBtn.disabled = true;
+                registerBtn.disabled = true;
+                try {
+                    const res = await fetch(getApiBase() + "/api/auth/login", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ email, password }),
+                    });
+                    const data = await res.json().catch(() => ({}));
+                    if (res.ok) {
+                        setAuth(data.access_token, data.email);
+                        showAuthMessage("");
+                        authPassword.value = "";
+                    } else {
+                        showAuthMessage(
+                            data.detail || "Login failed.",
+                            "error",
+                        );
+                    }
+                } catch (e) {
+                    showAuthMessage("Request failed: " + e.message, "error");
+                }
+                loginBtn.disabled = false;
+                registerBtn.disabled = false;
+            }
+
+            async function doRegister() {
+                const email = (authEmail.value || "").trim();
+                const password = authPassword.value || "";
+                if (!email || !password) {
+                    showAuthMessage("Enter email and password.", "error");
+                    return;
+                }
+                if (password.length < 8) {
+                    showAuthMessage(
+                        "Password must be at least 8 characters.",
+                        "error",
+                    );
+                    return;
+                }
+                showAuthMessage("Creating account…", "info");
+                loginBtn.disabled = true;
+                registerBtn.disabled = true;
+                try {
+                    const res = await fetch(
+                        getApiBase() + "/api/auth/register",
+                        {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ email, password }),
+                        },
+                    );
+                    const data = await res.json().catch(() => ({}));
+                    if (res.ok) {
+                        setAuth(data.access_token, data.email);
+                        showAuthMessage("");
+                        authPassword.value = "";
+                    } else {
+                        showAuthMessage(
+                            data.detail || "Registration failed.",
+                            "error",
+                        );
+                    }
+                } catch (e) {
+                    showAuthMessage("Request failed: " + e.message, "error");
+                }
+                loginBtn.disabled = false;
+                registerBtn.disabled = false;
+            }
+
+            function logout() {
+                setAuth(null);
+                showAuthMessage("");
+                showApproveMessage("");
+            }
+
+            tabLogin.addEventListener("click", function () {
+                tabLogin.classList.add("active");
+                tabRegister.classList.remove("active");
+                authTitle.textContent = "Log in";
+                registerBtn.classList.add("hide");
+                loginBtn.classList.remove("hide");
+            });
+            tabRegister.addEventListener("click", function () {
+                tabRegister.classList.add("active");
+                tabLogin.classList.remove("active");
+                authTitle.textContent = "Register";
+                loginBtn.classList.add("hide");
+                registerBtn.classList.remove("hide");
+            });
+
+            loginBtn.addEventListener("click", doLogin);
+            registerBtn.addEventListener("click", doRegister);
+            logoutBtn.addEventListener("click", logout);
+
+            approveBtn.addEventListener("click", async function () {
+                const token = getToken();
+                if (!token) {
+                    showApproveMessage("Please log in first.", "error");
+                    return;
+                }
+                const raw = (deviceCodeInput.value || "")
+                    .trim()
+                    .toUpperCase()
+                    .replace(/[^A-Z0-9]/g, "")
+                    .slice(0, 8);
+                if (!raw) {
+                    showApproveMessage("Please enter a device code.", "error");
+                    return;
+                }
+                const userCode =
+                    raw.length > 4
+                        ? raw.slice(0, 4) + "-" + raw.slice(4, 8)
+                        : raw;
+                showApproveMessage("Activating…", "info");
+                approveBtn.disabled = true;
+                try {
+                    const res = await fetch(
+                        getApiBase() + "/api/device/approve",
+                        {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                Authorization: "Bearer " + token,
+                            },
+                            body: JSON.stringify({ user_code: userCode }),
+                        },
+                    );
+                    const data = await res.json().catch(() => ({}));
+                    if (res.ok) {
+                        showApproveMessage(
+                            (data.message || "Code approved.") +
+                                " The device will appear below once it connects (e.g. from Packet Tracer).",
+                            "success",
+                        );
+                        deviceCodeInput.value = "";
+                        loadDeviceList();
+                        setTimeout(loadDeviceList, 2500);
+                    } else {
+                        showApproveMessage(
+                            data.detail || "Activation failed.",
+                            "error",
+                        );
+                    }
+                } catch (e) {
+                    showApproveMessage("Request failed: " + e.message, "error");
+                }
+                approveBtn.disabled = false;
+            });
+
+            deviceCodeInput.addEventListener("input", function () {
+                let v = this.value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+                if (v.length > 4) v = v.slice(0, 4) + "-" + v.slice(4, 8);
+                this.value = v;
+            });
+
+            function showSubscriptionMessage(text, type) {
+                subscriptionMessage.textContent = text;
+                subscriptionMessage.className = "message " + (type || "info");
+                subscriptionMessage.style.display = text ? "block" : "none";
+            }
+
+            function showRevokeMessage(text, type) {
+                revokeMessage.textContent = text;
+                revokeMessage.className = "message " + (type || "info");
+                revokeMessage.style.display = text ? "block" : "none";
+            }
+
+            async function loadSubscription() {
+                const token = getToken();
+                if (!token) return;
+                subscriptionStatus.textContent = "Loading…";
+                subscriptionUsage.style.display = "none";
+                subscriptionUsage.textContent = "";
+                manageSubBtn.style.display = "none";
+                subscriptionPlans.classList.add("hide");
+                try {
+                    const subRes = await fetch(
+                        getApiBase() + "/api/user/subscription",
+                        {
+                            headers: { Authorization: "Bearer " + token },
+                        },
+                    );
+                    if (subRes.ok) {
+                        const sub = await subRes.json();
+                        const tier = (
+                            sub.tier ||
+                            sub.plan ||
+                            "unknown"
+                        ).toLowerCase();
+                        const name =
+                            tier === "pro"
+                                ? "Pro"
+                                : tier === "starter"
+                                  ? "Starter"
+                                  : sub.tier || "Active";
+                        subscriptionStatus.textContent =
+                            "Current plan: " +
+                            name +
+                            (sub.status ? " (" + sub.status + ")" : "");
+                        manageSubBtn.style.display = "inline-block";
+                        try {
+                            const usageRes = await fetch(
+                                getApiBase() + "/api/user/usage",
+                                {
+                                    headers: {
+                                        Authorization: "Bearer " + token,
+                                    },
+                                },
+                            );
+                            if (usageRes.ok) {
+                                const usage = await usageRes.json();
+                                const remaining =
+                                    usage.remaining != null
+                                        ? usage.remaining
+                                        : usage.monthly_limit -
+                                          (usage.current_usage || 0);
+                                const fmt = function (n) {
+                                    return Number(n).toLocaleString();
+                                };
+                                subscriptionUsage.textContent =
+                                    usage.monthly_limit != null
+                                        ? fmt(remaining) +
+                                          " tokens left this period (" +
+                                          fmt(usage.current_usage || 0) +
+                                          " of " +
+                                          fmt(usage.monthly_limit) +
+                                          " used)"
+                                        : "";
+                                subscriptionUsage.style.display =
+                                    subscriptionUsage.textContent
+                                        ? "block"
+                                        : "none";
+                            } else {
+                                subscriptionUsage.style.display = "none";
+                            }
+                        } catch (err) {
+                            subscriptionUsage.style.display = "none";
+                        }
+                    } else {
+                        subscriptionStatus.textContent =
+                            "No active subscription. Subscribe to use the agent and add more devices.";
+                        subscriptionUsage.style.display = "none";
+                    }
+                    const plansRes = await fetch(
+                        getApiBase() + "/api/stripe/plans",
+                    );
+                    if (plansRes.ok) {
+                        const data = await plansRes.json();
+                        cachedPlans = data.plans || [];
+                    }
+                } catch (e) {
+                    subscriptionStatus.textContent =
+                        "Could not load subscription: " + e.message;
+                }
+            }
+
+            upgradeBtn.addEventListener("click", function () {
+                if (cachedPlans.length === 0) {
+                    showSubscriptionMessage(
+                        "Plans not loaded. Refresh the page.",
+                        "error",
+                    );
+                    return;
+                }
+                if (subscriptionPlans.classList.contains("hide")) {
+                    plansList.innerHTML = "";
+                    cachedPlans.forEach(function (plan) {
+                        const btn = document.createElement("button");
+                        btn.type = "button";
+                        btn.className = "btn-primary";
+                        btn.textContent = plan.name + " – " + plan.price;
+                        btn.style.marginBottom = "8px";
+                        btn.addEventListener("click", async function () {
+                            btn.disabled = true;
+                            showSubscriptionMessage(
+                                "Redirecting to checkout…",
+                                "info",
+                            );
+                            try {
+                                const res = await fetch(
+                                    getApiBase() +
+                                        "/api/stripe/create-checkout",
+                                    {
+                                        method: "POST",
+                                        headers: {
+                                            "Content-Type": "application/json",
+                                            Authorization:
+                                                "Bearer " + getToken(),
+                                        },
+                                        body: JSON.stringify({
+                                            price_id: plan.price_id,
+                                        }),
+                                    },
+                                );
+                                const data = await res.json().catch(() => ({}));
+                                if (res.ok && data.url) {
+                                    window.location.href = data.url;
+                                    return;
+                                }
+                                showSubscriptionMessage(
+                                    data.detail || "Checkout failed.",
+                                    "error",
+                                );
+                            } catch (e) {
+                                showSubscriptionMessage(
+                                    "Request failed: " + e.message,
+                                    "error",
+                                );
+                            }
+                            btn.disabled = false;
+                        });
+                        plansList.appendChild(btn);
+                    });
+                    subscriptionPlans.classList.remove("hide");
+                } else {
+                    subscriptionPlans.classList.add("hide");
+                }
+            });
+
+            manageSubBtn.addEventListener("click", async function () {
+                manageSubBtn.disabled = true;
+                showSubscriptionMessage("Opening customer portal…", "info");
+                try {
+                    const res = await fetch(
+                        getApiBase() + "/api/stripe/create-portal-session",
+                        {
+                            method: "POST",
+                            headers: { Authorization: "Bearer " + getToken() },
+                        },
+                    );
+                    const data = await res.json().catch(() => ({}));
+                    if (res.ok && data.url) {
+                        window.location.href = data.url;
+                        return;
+                    }
+                    showSubscriptionMessage(
+                        data.detail || "Could not open portal.",
+                        "error",
+                    );
+                } catch (e) {
+                    showSubscriptionMessage(
+                        "Request failed: " + e.message,
+                        "error",
+                    );
+                }
+                manageSubBtn.disabled = false;
+            });
+
+            async function loadDeviceList() {
+                const token = getToken();
+                if (!token) return;
+                if (refreshDevicesBtn) refreshDevicesBtn.disabled = true;
+                deviceList.innerHTML = "";
+                deviceListEmpty.classList.add("hide");
+                try {
+                    const res = await fetch(getApiBase() + "/api/device/list", {
+                        headers: { Authorization: "Bearer " + token },
+                    });
+                    const data = await res.json().catch(() => ({}));
+                    const devices = res.ok && data.devices ? data.devices : [];
+                    if (devices.length === 0) {
+                        deviceListEmpty.classList.remove("hide");
+                        return;
+                    }
+                    devices.forEach(function (dev) {
+                        const row = document.createElement("div");
+                        row.className = "device-row";
+                        row.innerHTML =
+                            "<span>" +
+                            (dev.label || dev.session_id) +
+                            "</span>";
+                        const delBtn = document.createElement("button");
+                        delBtn.type = "button";
+                        delBtn.className = "btn-danger";
+                        delBtn.textContent = "Remove";
+                        delBtn.addEventListener("click", async function () {
+                            delBtn.disabled = true;
+                            showRevokeMessage("Removing device…", "info");
+                            try {
+                                const r = await fetch(
+                                    getApiBase() + "/api/device/revoke",
+                                    {
+                                        method: "POST",
+                                        headers: {
+                                            "Content-Type": "application/json",
+                                            Authorization:
+                                                "Bearer " + getToken(),
+                                        },
+                                        body: JSON.stringify({
+                                            session_id: dev.session_id,
+                                        }),
+                                    },
+                                );
+                                const d = await r.json().catch(() => ({}));
+                                if (r.ok) {
+                                    showRevokeMessage(
+                                        d.message || "Device removed.",
+                                        "success",
+                                    );
+                                    loadDeviceList();
+                                } else {
+                                    showRevokeMessage(
+                                        d.detail || "Failed to remove device.",
+                                        "error",
+                                    );
+                                    delBtn.disabled = false;
+                                }
+                            } catch (e) {
+                                showRevokeMessage(
+                                    "Request failed: " + e.message,
+                                    "error",
+                                );
+                                delBtn.disabled = false;
+                            }
+                        });
+                        row.appendChild(delBtn);
+                        deviceList.appendChild(row);
+                    });
+                } catch (e) {
+                    deviceListEmpty.textContent =
+                        "Could not load devices: " + e.message;
+                    deviceListEmpty.classList.remove("hide");
+                }
+                if (refreshDevicesBtn) refreshDevicesBtn.disabled = false;
+            }
+
+            if (refreshDevicesBtn) {
+                refreshDevicesBtn.addEventListener("click", function () {
+                    loadDeviceList();
+                });
+            }
+
+            function handleCheckoutReturn() {
+                const params = new URLSearchParams(window.location.search);
+                const checkout = params.get("checkout");
+                const resultEl = document.getElementById("checkoutResult");
+                const resultText =
+                    document.getElementById("checkoutResultText");
+                if (checkout === "success") {
+                    resultText.textContent =
+                        "Thank you! Your subscription is active. You can use the agent and manage your plan below.";
+                    resultText.className = "message success";
+                    resultEl.classList.remove("hide");
+                    if (typeof loadSubscription === "function")
+                        loadSubscription();
+                    if (typeof loadDeviceList === "function") loadDeviceList();
+                } else if (checkout === "cancel") {
+                    resultText.textContent =
+                        "Checkout was cancelled. You can try again from the Subscription section when logged in.";
+                    resultText.className = "message info";
+                    resultEl.classList.remove("hide");
+                }
+                if (checkout) {
+                    const cleanUrl = window.location.pathname || "/";
+                    window.history.replaceState({}, document.title, cleanUrl);
+                }
+            }
+
+            // Initial UI: show Login by default, Register button hidden until tab switch
+            registerBtn.classList.add("hide");
+            updateAuthUI();
+            checkStatus();
+            handleCheckoutReturn();
+        </script>
+    </body>
+</html>
