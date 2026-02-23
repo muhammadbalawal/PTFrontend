@@ -299,8 +299,8 @@
             <input
                 id="apiBase"
                 type="text"
-                placeholder="http://146.190.245.74:8000"
-                value="http://146.190.245.74:8000"
+                placeholder="https://api.trcr.tech"
+                value="https://api.trcr.tech"
             />
         </div>
 
@@ -348,9 +348,10 @@
             let deviceListRefreshInterval = null;
 
             function getApiBase() {
-                return (
-                    apiBaseInput.value || "http://146.190.245.74:8000"
-                ).replace(/\/$/, "");
+                return (apiBaseInput.value || "https://api.trcr.tech").replace(
+                    /\/$/,
+                    "",
+                );
             }
 
             function getToken() {
